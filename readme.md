@@ -105,3 +105,5 @@ O sistema gera uma classificação analítica baseada nas frequências dominante
 O sistema integrado demonstrou conformidade com os requisitos de arquitetura estipulados. O uso do protocolo de comunicação MQTT binário eliminou as perdas de pacotes registradas em testes preliminares baseados em JSON sequencial via sockets simples. 
 
 O processamento digital no backend descentralizou a carga operacional da CPU do navegador client-side, permitindo a exibição fluida das curvas de FFT nos três eixos de forma síncrona. Os dados convertidos para o formato CSV estruturado mantêm a compatibilidade com ferramentas secundárias de análise estatística de terceiros, validando a eficácia e o escalonamento da ferramenta IoT construída.
+
+Github:  https://github.com/WillianGiacomitti/DetectorTremor.git

@@ -11,7 +11,7 @@ from flask import Flask, render_template, jsonify, request
 import paho.mqtt.client as mqtt
 
 # ==== CONFIGURAÇÕES GERAIS ====
-BROKER_IP = "192.168.0.122"  # Ajuste para o IP do seu Broker/PC se necessário
+BROKER_IP = "10.201.72.236"  # Ajuste para o IP do seu Broker/PC se necessário
 TOPIC_COMANDO = "exame/comando"
 TOPIC_STATUS = "exame/status"
 TOPIC_DADOS = "exame/dados"

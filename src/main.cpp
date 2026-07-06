@@ -5,9 +5,9 @@
 #include <math.h>
 
 // ==== Configurações de Rede e MQTT ====
-const char* ssid = "rededoprojeto";
-const char* password = "arededoprojeto";
-const char* mqtt_server = "192.168.0.122"; // Coloque o IP do seu PC aqui
+const char* ssid = "DetectaTremor";
+const char* password = "123456789";
+const char* mqtt_server = "10.201.72.236"; // Coloque o IP do seu PC aqui
 
 WiFiClient espClient;
 PubSubClient client(espClient);
