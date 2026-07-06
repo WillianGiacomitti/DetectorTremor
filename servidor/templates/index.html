@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroTremor - Painel de Análise Integrado</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-main: #070913;
+            --bg-card: #111524;
+            --bg-input: #0a0d1a;
+            --border-color: #1e2640;
+            --text-main: #f8fafc;
+            --text-muted: #64748b;
+            --accent-purple: #6366f1;
+            --accent-purple-hover: #4f46e5;
+            --chart-blue: #3b82f6;
+            --chart-red: #ef4444;
+            --chart-green: #10b981;
+            
+            --badge-green-bg: rgba(16, 185, 129, 0.15);
+            --badge-green-text: #10b981;
+            --badge-orange-bg: rgba(245, 158, 11, 0.15);
+            --badge-orange-text: #f59e0b;
+            --badge-yellow-bg: rgba(234, 179, 8, 0.15);
+            --badge-yellow-text: #eab308;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4 { font-weight: 700; }
+        .text-muted { color: var(--text-muted); }
+        .text-sm { font-size: 0.875rem; }
+        .text-xs { font-size: 0.75rem; }
+        .font-mono { font-family: monospace; font-size: 0.85rem; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        
+        .hidden { display: none !important; }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .logo-area h1 { font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+        .logo-area p { font-size: 0.7rem; letter-spacing: 1px; color: var(--text-muted); margin-top: 0.2rem; }
+
+        .top-panel {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .input-group input {
+            flex: 1;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+        }
+        
+        .input-group input:focus { border-color: var(--accent-purple); }
+
+        .btn-primary {
+            background-color: var(--accent-purple);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 2rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover { background-color: var(--accent-purple-hover); }
+        .btn-primary:disabled { background-color: var(--text-muted); cursor: not-allowed; }
+
+        .legend { display: flex; gap: 1.5rem; font-size: 0.8rem; color: var(--text-muted); }
+        .legend-item i { font-size: 0.5rem; margin-right: 0.3rem; }
+
+        .badge-status {
+            background-color: var(--badge-orange-bg);
+            color: var(--badge-orange-text);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .chart-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
+        .card-title-area { display: flex; align-items: center; gap: 1rem; }
+        .icon-box { background-color: var(--bg-input); border: 1px solid var(--border-color); width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--accent-purple); }
+
+        .badge-mod { background-color: var(--badge-orange-bg); color: var(--badge-orange-text); }
+        .badge-norm { background-color: var(--badge-green-bg); color: var(--badge-green-text); }
+        .small-badge { padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; }
+        .stat-value { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.2rem; }
+        .stat-label { font-size: 0.65rem; color: var(--text-muted); letter-spacing: 1px; }
+
+        .chart-area { height: 180px; width: 100%; position: relative; }
+        .chart-title { font-size: 0.7rem; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 1rem; }
+        
+        .svg-chart { width: 100%; height: 100%; overflow: visible; background-color: var(--bg-input); border-radius: 6px; }
+        .svg-line { fill: none; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+        .grid-line { stroke: var(--border-color); stroke-width: 1; stroke-dasharray: 4; }
+
+        .x-axis { display: flex; justify-content: space-between; margin-top: 0.5rem; color: var(--text-muted); font-size: 0.6rem; padding: 0 5px; }
+    </style>
+</head>
+<body>
+
+    <header class="header-main">
+        <div class="logo-area">
+            <h1><i class="fa-solid fa-wave-square" style="color: var(--accent-purple);"></i> NeuroTremor</h1>
+            <p>SISTEMA DE ANÁLISE DE TREMOR IOT</p>
+        </div>
+        <div class="text-sm text-muted">
+            <i class="fa-regular fa-clock"></i> <span id="dataAtual"></span>
+        </div>
+    </header>
+
+    <section class="top-panel">
+        <label class="text-xs text-muted">NOME DO PACIENTE</label>
+        <div class="input-group">
+            <input type="text" id="inputNomePaciente" placeholder="Digite o nome do paciente para iniciar" autocomplete="off">
+            <button id="btnIniciar" class="btn-primary">
+                <i class="fa-solid fa-play"></i> Iniciar Exame
+            </button>
+        </div>
+        <div class="legend">
+            <div class="legend-item"><i class="fa-solid fa-circle" style="color: var(--chart-blue);"></i> Pitch (Eixo X)</div>
+            <div class="legend-item"><i class="fa-solid fa-circle" style="color: var(--chart-red);"></i> Roll (Eixo Y)</div>
+            <div class="legend-item"><i class="fa-solid fa-circle" style="color: var(--chart-green);"></i> Yaw (Eixo Z)</div>
+        </div>
+    </section>
+
+    <div id="containerResultados" class="hidden">
+        
+        <div class="flex justify-between items-center" style="margin-bottom: 1.5rem;">
+            <div>
+                <h2>Resultados Analíticos</h2>
+                <div class="text-sm text-muted mt-1">Paciente: <span id="displayNomePaciente" class="text-main font-bold"></span> &nbsp;|&nbsp; Estado da Sessão: <span class="font-mono" id="displayStatusSessao" style="color: var(--accent-purple);">AGUARDANDO</span></div>
+            </div>
+            <div class="badge-status" id="badgeGlobal">
+                <i class="fa-solid fa-spinner fa-spin" id="statusIcon"></i> <span id="statusTexto">Aguardando ESP32</span>
+            </div>
+        </div>
+
+        <article class="chart-card">
+            <div class="card-header">
+                <div class="card-title-area">
+                    <div class="icon-box"><i class="fa-solid fa-chart-line"></i></div>
+                    <div>
+                        <h3>Domínio do Tempo - Amplitude Dinâmica</h3>
+                        <div class="text-xs text-muted">Sinal centralizado após remoção do DC offset</div>
+                    </div>
+                </div>
+                <div class="small-badge badge-norm" id="classificacaoTempo">Sinal Ativo</div>
+            </div>
+
+            <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div><div class="stat-value" id="valAmpP">0.00</div><div class="stat-label">AMPLITUDE MÉDIA PITCH (X)</div></div>
+                <div><div class="stat-value" id="valAmpR">0.00</div><div class="stat-label">AMPLITUDE MÉDIA ROLL (Y)</div></div>
+                <div><div class="stat-value" id="valAmostras">0</div><div class="stat-label">TOTAL DE AMOSTRAS</div></div>
+            </div>
+
+            <div class="chart-title">SINAL DE ORIENTAÇÃO FILTRADO (GRAUS)</div>
+            <div class="chart-area">
+                <svg class="svg-chart" id="svgTempo" viewBox="0 0 1000 100" preserveAspectRatio="none">
+                    <line x1="0" y1="25" x2="1000" y2="25" class="grid-line" />
+                    <line x1="0" y1="50" x2="1000" y2="50" class="grid-line" />
+                    <line x1="0" y1="75" x2="1000" y2="75" class="grid-line" />
+                    <polyline id="pathPitch" class="svg-line" style="stroke: var(--chart-blue);" points=""/>
+                    <polyline id="pathRoll" class="svg-line" style="stroke: var(--chart-red);" points=""/>
+                    <polyline id="pathYaw" class="svg-line" style="stroke: var(--chart-green);" points=""/>
+                </svg>
+                <div class="x-axis" id="eixoXTempo">
+                    <span>0.0s</span><span>3.7s</span><span>7.5s</span><span>11.2s</span><span>15.0s</span>
+                </div>
+            </div>
+        </article>
+
+        <article class="chart-card">
+            <div class="card-header">
+                <div class="card-title-area">
+                    <div class="icon-box"><i class="fa-solid fa-chart-line"></i></div>
+                    <div>
+                        <h3>Domínio da Frequência - Densidade Espectral (FFT)</h3>
+                        <div class="text-xs text-muted">Componentes harmônicos contínuos isolados na faixa humana</div>
+                    </div>
+                </div>
+                <div class="small-badge badge-mod" id="classificacaoFreq">Análise Espectral</div>
+            </div>
+
+            <div class="stats-grid">
+                <div><div class="stat-value" id="valFreqDom">0.00 Hz</div><div class="stat-label">FREQUÊNCIA DOMINANTE</div></div>
+                <div><div class="stat-value" id="valMagnitude">0.00</div><div class="stat-label">MAGNITUDE DO PICO</div></div>
+                <div><div class="stat-value" id="valPicosP">0</div><div class="stat-label">CICLOS DETECTADOS (PITCH)</div></div>
+                <div><div class="stat-value" id="valPicosR">0</div><div class="stat-label">CICLOS DETECTADOS (ROLL)</div></div>
+            </div>
+
+            <div class="chart-title">ESPECTRO DE MAGNITUDE CONTÍNUO (JANELA DE FAIXA 0.5 HZ - 25 HZ)</div>
+            <div class="chart-area">
+                <svg class="svg-chart" id="svgFrequencia" viewBox="0 0 1000 100" preserveAspectRatio="none">
+                    <line x1="0" y1="25" x2="1000" y2="25" class="grid-line" />
+                    <line x1="0" y1="50" x2="1000" y2="50" class="grid-line" />
+                    <line x1="0" y1="75" x2="1000" y2="75" class="grid-line" />
+                    <polyline id="pathFFTPitch" class="svg-line" style="stroke: var(--chart-blue);" points=""/>
+                    <polyline id="pathFFTRoll" class="svg-line" style="stroke: var(--chart-red);" points=""/>
+                    <polyline id="pathFFTYaw" class="svg-line" style="stroke: var(--chart-green);" points=""/>
+                </svg>
+                <div class="x-axis" id="eixoXFrequencia">
+                    <span>0.5 Hz</span><span>6.6 Hz</span><span>12.8 Hz</span><span>18.9 Hz</span><span>25.0 Hz</span>
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const agora = new Date();
+            document.getElementById("dataAtual").innerHTML = agora.toLocaleDateString('pt-BR') + " - " + agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+            const inputNome = document.getElementById("inputNomePaciente");
+            const btnIniciar = document.getElementById("btnIniciar");
+            const containerResultados = document.getElementById("containerResultados");
+            const displayNome = document.getElementById("displayNomePaciente");
+            const displayStatusSessao = document.getElementById("displayStatusSessao");
+            
+            const badgeGlobal = document.getElementById("badgeGlobal");
+            const statusIcon = document.getElementById("statusIcon");
+            const statusTexto = document.getElementById("statusTexto");
+
+            let intervaloMonitoria = null;
+
+            btnIniciar.addEventListener("click", function() {
+                const nomeDigitado = inputNome.value.trim();
+                if (nomeDigitado === "") {
+                    alert("Por favor, preencha o nome do paciente.");
+                    inputNome.focus();
+                    return;
+                }
+
+                btnIniciar.disabled = true;
+                displayNome.textContent = nomeDigitado;
+                containerResultados.classList.remove("hidden");
+                containerResultados.classList.add("fade-in");
+                
+                definirStatusUI("GRAVANDO", "Coletando dados do sensor (15s)...");
+
+                fetch('/api/iniciar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome_paciente: nomeDigitado })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.sucesso) {
+                        iniciarMonitoramento();
+                    } else {
+                        alert("Erro ao iniciar exame: " + data.erro);
+                        btnIniciar.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Falha de conexão com o servidor Python.");
+                    btnIniciar.disabled = false;
+                });
+            });
+
+            function definirStatusUI(status, texto) {
+                displayStatusSessao.textContent = status;
+                statusTexto.textContent = texto;
+                
+                if (status === "GRAVANDO") {
+                    badgeGlobal.style.backgroundColor = "rgba(245, 158, 11, 0.15)";
+                    badgeGlobal.style.color = "#f59e0b";
+                    statusIcon.className = "fa-solid fa-circle-notch fa-spin";
+                } else if (status === "ENVIANDO_DADOS") {
+                    badgeGlobal.style.backgroundColor = "rgba(234, 179, 8, 0.15)";
+                    badgeGlobal.style.color = "#eab308";
+                    statusIcon.className = "fa-solid fa-cloud-arrow-up fa-spin";
+                } else if (status === "CONCLUIDO") {
+                    badgeGlobal.style.backgroundColor = "rgba(16, 185, 129, 0.15)";
+                    badgeGlobal.style.color = "#10b981";
+                    statusIcon.className = "fa-solid fa-check-circle";
+                }
+            }
+
+            function iniciarMonitoramento() {
+                if (intervaloMonitoria) clearInterval(intervaloMonitoria);
+                
+                intervaloMonitoria = setInterval(() => {
+                    fetch('/api/status')
+                    .then(res => res.json())
+                    .then(data => {
+                        document.getElementById("valAmostras").textContent = data.amostras_recebidas;
+                        
+                        if (data.status_esp32 === "GRAVANDO") {
+                            definirStatusUI("GRAVANDO", "Amostragem ativa a 200 Hz (" + data.amostras_recebidas + " pts)");
+                        } else if (data.status_esp32 === "ENVIANDO_DADOS") {
+                            definirStatusUI("ENVIANDO_DADOS", "Descarregando memória RAM via MQTT (" + data.amostras_recebidas + " pts)");
+                        } else if (data.status_esp32 === "LOTE_CONCLUIDO" || (!data.exame_em_andamento && data.amostras_recebidas > 0)) {
+                            clearInterval(intervaloMonitoria);
+                            definirStatusUI("CONCLUIDO", "Lote recebido e gravado.");
+                            carregarERenderizarResultados();
+                        }
+                    });
+                }, 800);
+            }
+
+            function carregarERenderizarResultados() {
+                statusTexto.textContent = "Processando sinais e algoritmos FFT...";
+                
+                fetch('/api/resultados')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.erro) {
+                        statusTexto.textContent = "Erro no processamento.";
+                        alert(data.erro);
+                        btnIniciar.disabled = false;
+                        return;
+                    }
+
+                    // Atualiza Métricas Cardinais
+                    document.getElementById("valAmpP").textContent = data.metricas.pitch.amplitude_media;
+                    document.getElementById("valAmpR").textContent = data.metricas.roll.amplitude_media;
+                    document.getElementById("valFreqDom").textContent = data.metricas.pitch.freq_dominante + " Hz";
+                    document.getElementById("valMagnitude").textContent = data.metricas.pitch.magnitude;
+                    document.getElementById("valPicosP").textContent = data.metricas.pitch.picos_detectados;
+                    document.getElementById("valPicosR").textContent = data.metricas.roll.picos_detectados;
+
+                    // Classificação Clínica Automatizada
+                    const fd = data.metricas.pitch.freq_dominante;
+                    let classeStr = "Fisiológico / Ruído Técnico";
+                    if (fd >= 3.0 && fd <= 6.5) { classeStr = "Padrão Clínico Parkinsoniano (3.0-6.5 Hz)"; }
+                    else if (fd > 6.5 && fd <= 12.0) { classeStr = "Padrão de Tremor Essencial / Postural (7.0-12.0 Hz)"; }
+                    document.getElementById("classificacaoFreq").textContent = classeStr;
+
+                    // Renderização Dinâmica do Sinal no Domínio do Tempo (SVG)
+                    renderizarLinhaTempoSVG("pathPitch", data.tempo, data.pitch_sinal);
+                    renderizarLinhaTempoSVG("pathRoll", data.tempo, data.roll_sinal);
+                    renderizarLinhaTempoSVG("pathYaw", data.tempo, data.yaw_sinal);
+
+                    // Encontra o pico máximo global entre os 3 eixos de FFT para manter a proporção relativa correta
+                    const maxMagGlobal = Math.max(...data.fft_pitch, ...data.fft_roll, ...data.fft_yaw) || 1;
+
+                    // Renderização Dinâmica do Sinal no Domínio da Frequência (Curva Contínua FFT)
+                    renderizarLinhaFFTSVG("pathFFTPitch", data.frequencias, data.fft_pitch, maxMagGlobal);
+                    renderizarLinhaFFTSVG("pathFFTRoll", data.frequencias, data.fft_roll, maxMagGlobal);
+                    renderizarLinhaFFTSVG("pathFFTYaw", data.frequencias, data.fft_yaw, maxMagGlobal);
+
+                    statusTexto.textContent = "Exame processado e concluído.";
+                    btnIniciar.disabled = false;
+                })
+                .catch(err => {
+                    console.error(err);
+                    statusTexto.textContent = "Erro ao buscar cálculos.";
+                    btnIniciar.disabled = false;
+                });
+            }
+
+            function renderizarLinhaTempoSVG(elementId, vetorTempo, vetorSinal) {
+                const elemento = document.getElementById(elementId);
+                if (!elemento || vetorSinal.length === 0) return;
+
+                const maxTempo = vetorTempo[vetorTempo.length - 1] || 15.0;
+                let maxSinal = Math.max(...vetorSinal);
+                let minSinal = Math.min(...vetorSinal);
+                let range = (maxSinal - minSinal) || 1;
+                
+                let pontosStr = "";
+                for (let i = 0; i < vetorSinal.length; i++) {
+                    let x = (vetorTempo[i] / maxTempo) * 1000;
+                    let y = 100 - (((vetorSinal[i] - minSinal) / range) * 80 + 10);
+                    pontosStr += x.toFixed(1) + "," + y.toFixed(1) + " ";
+                }
+                elemento.setAttribute("points", pontosStr.trim());
+            }
+
+            function renderizarLinhaFFTSVG(elementId, vetorFreq, vetorMagnitude, maxMagnitude) {
+                const elemento = document.getElementById(elementId);
+                if (!elemento || vetorMagnitude.length === 0) return;
+
+                const minFreq = 0.5;
+                const maxFreq = 25.0;
+                const rangeFreq = maxFreq - minFreq || 1;
+                
+                let pontosStr = "";
+                for (let i = 0; i < vetorMagnitude.length; i++) {
+                    // Mapeia o eixo X de 0.5Hz a 25Hz para a largura de 0 a 1000 do viewBox do SVG
+                    let x = ((vetorFreq[i] - minFreq) / rangeFreq) * 1000;
+                    // Mapeia o eixo Y de 0 a maxMagnitude para a altura invertida de 100 a 5 do SVG
+                    let y = 100 - ((vetorMagnitude[i] / maxMagnitude) * 90 + 5);
+                    pontosStr += x.toFixed(1) + "," + y.toFixed(1) + " ";
+                }
+                elemento.setAttribute("points", pontosStr.trim());
+            }
+        });
+    </script>
+</body>
+</html>

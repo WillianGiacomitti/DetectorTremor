@@ -6,7 +6,7 @@ from scipy.fft import rfft, rfftfreq
 # ==== CONFIGURAÇÕES ====
 # Coloque aqui o nome do arquivo CSV gerado pelo seu controlador
 # ARQUIVO_CSV = r"C:\Users\Will\Documents\PlatformIO\Projects\DetectorTremor\exame_tremores_2026-07-04_21-17-55.csv"
-ARQUIVO_CSV = r"C:\Users\Will\Documents\PlatformIO\Projects\DetectorTremor\exame_tremores_2026-07-04_21-12-33.csv"
+ARQUIVO_CSV = r"C:\Users\Will\Documents\PlatformIO\Projects\DetectorTremor\exame_tremores_2026-07-06_10-56-40.csv"
 # ARQUIVO_CSV = r"C:\Users\Will\Documents\PlatformIO\Projects\DetectorTremor\exame_tremores_2026-07-04_21-22-27.csv" 
 TAXA_AMOSTRAGEM = 200.0  # O nosso ESP32 coleta a 200 Hz (5ms)
 
