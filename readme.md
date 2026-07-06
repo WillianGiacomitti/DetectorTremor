@@ -24,13 +24,28 @@ O fluxo temporal das interações de mensagens, rotinas de polling e chamadas de
 
 ## 4. Metodologia Utilizada
 * **Coleta Estrita de Dados:** Definição de uma taxa de amostragem fixa de $200\text{ Hz}$ ($\Delta t = 5\text{ ms}$) controlada por temporizadores internos em hardware, garantindo a integridade da frequência de amostragem para evitar o efeito de *aliasing*.
+
+* **Captura e Cálculo de Ângulos Brutos:** A determinação da orientação espacial antecede a filtragem e baseia-se em duas fontes físicas independentes a partir dos dados brutos do sensor inercial:
+  * **Acelerômetro:** Mede a aceleração linear provocada pela gravidade ($1g$). Os ângulos de inclinação estática para os eixos de Roll ($\phi$) e Pitch ($\theta$) são extraídos via trigonometria vetorial com a função arco-tangente de dois argumentos (`atan2`):
+    $$\text{Roll}_{\text{acel}} = \text{atan2}(A_Y, \sqrt{A_X^2 + A_Z^2}) \times \left(\frac{180}{\pi}\right)$$
+    $$\text{Pitch}_{\text{acel}} = \text{atan2}(-A_X, \sqrt{A_Y^2 + A_Z^2}) \times \left(\frac{180}{\pi}\right)$$
+    Este método apresenta estabilidade a longo prazo, mas sofre com ruídos de alta frequência causados por vibrações e tremores mecânicos rápidos.
+  * **Giroscópio:** Mede a velocidade angular em graus por segundo ($^{\circ}/s$). O ângulo dinâmico é obtido por integração numérica discreta no tempo a cada ciclo $\Delta t$:
+    $$\theta_{\text{giro}}(t) = \theta_{\text{anterior}} + (G_{\text{eixo}} \times \Delta t)$$
+    Esta estimativa é imune a vibrações lineares rápidas, porém acumula erros marginais de integração ao longo do tempo, gerando o fenômeno de deriva (*drift*).
+
+* **Fusão Sensorial com Filtro de Kalman:** Para mitigar o ruído do acelerômetro e a deriva do giroscópio, implementa-se um algoritmo linear de estimativa estocástica. O Filtro de Kalman opera em duas fases recursivas:
+  1. **Predição:** Utiliza a velocidade angular do giroscópio para projetar o próximo estado do ângulo e estimar a covariância do erro de transição.
+  2. **Correção (Atualização):** Compara a predição com o ângulo estático calculado pelo acelerômetro, gerando um resíduo de medição. O ganho de Kalman ($K$) determina dinamicamente o peso de confiança atribuído a cada sensor com base nas matrizes de variância do ruído do processo ($Q$) e da medição ($R$), resultando em um ângulo corrigido estável e de baixa latência.
+
+
+
 * **Otimização de Payload:** Uso da biblioteca `struct` para compactação binária de dados do tipo `float` (padrão IEEE 754), otimizando a transmissão via MQTT e evitando sobrecarga de strings JSON no microcontrolador.
+
 * **Processamento Digital de Sinais (DSP):**
-  * **Cálculo de Ângulos Angulares:** Aplicação de trigonometria vetorial com `atan2` para determinação dos ângulos de inclinação estática via acelerômetro, e integração discreta sobre os valores do giroscópio.
   * **Remoção de Offset DC:** Subtração do valor médio do sinal para centralizar a amplitude em zero volt/grau, eliminando a componente de frequência nula ($0\text{ Hz}$).
   * **Análise Espectral:** Execução do algoritmo da Transformada Rápida de Fourier Real (`rfft`) para transpor os dados temporais ao domínio da frequência.
   * **Filtragem Digital:** Mascaramento do vetor resultante para isolar exclusivamente a banda biológica compreendida entre $0.5\text{ Hz}$ e $25\text{ Hz}$.
-
 ## 5. Tecnologias, Sensores e Dispositivos Utilizados
 * **Hardware:**
   * Microcontrolador ESP32 (Arquitetura Xtensa de 32 bits, Wi-Fi integrado).
