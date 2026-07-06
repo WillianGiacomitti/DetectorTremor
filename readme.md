@@ -1,85 +1,88 @@
-# Desenvolvimento e Avaliação de um Sistema IoT para Quantificação e Análise de Tremores Biomédicos
+# Relatório Técnico de Desenvolvimento: Sistema NeuroTremor para Análise de Tremor Coletado via IoT
 
-## Integração de ESP32, Filtro de Kalman e Algoritmos de Espectrometria de Frequência em Python
+## 1. Introdução e Contextualização do Problema
+O diagnóstico e o acompanhamento de distúrbios de movimento, tais como o Tremor Essencial e a Doença de Parkinson, dependem fundamentalmente da quantificação precisa de variáveis físicas associadas à oscilação motora dos membros superiores. A avaliação puramente clínica baseada em escalas visuais subjetivas introduz margens de erro e variações interobservador. 
 
-### Resumo
-Este documento apresenta o desenvolvimento de um sistema de Internet das Coisas (IoT) projetado para a captura, transmissão e análise de tremores motores humanos. O sistema baseia-se na integração de uma unidade de medição inercial (IMU MPU9250) a um microcontrolador ESP32. Utilizando uma arquitetura de firmware baseada em máquina de estados e fusão sensorial via Filtro de Kalman, o dispositivo realiza a amostragem de dados a uma taxa de 200 Hz. A transmissão de dados é executada por pacotes binários estruturados através do protocolo MQTT. No backend, um controlador em Python gerencia o fluxo operacional, decodifica a carga binária nativa e aplica técnicas de Processamento Digital de Sinais (PDS), incluindo a remoção da componente contínua (DC Offset) e a Transformada Rápida de Fourier (FFT). Os resultados demonstram a identificação da frequência dominante do tremor, validando o sistema como uma ferramenta para auxílio à análise clínica neurológica.
+Este projeto aborda o problema por meio do desenvolvimento de um sistema computacional capaz de monitorar, registrar e processar sinais de orientação espacial e aceleração angular de forma quantitativa. O foco reside na distinção matemática entre as frequências harmônicas dos tremores corporais para auxiliar no mapeamento clínico de pacientes.
 
----
+## 2. Objetivos do Projeto
+* Desenvolver uma unidade de aquisição de dados em hardware embarcado para leitura de variáveis inerciais.
+* Implementar uma infraestrutura de comunicação baseada em mensageria de baixa latência para o descarregamento das amostras de dados.
+* Estruturar um servidor backend centralizado para o processamento digital de sinais (DSP).
+* Construir uma interface gráfica web que possibilite o disparo do exame e a visualização contínua dos dados nos domínios do tempo e da frequência.
 
-## 1. Introdução
-A quantificação objetiva de tremores neuromotores — tais como o tremor de repouso associado à Doença de Parkinson ou o tremor postural presente no Tremor Essencial — é utilizada para avaliações clínicas diagnósticas. Tradicionalmente, estas avaliações baseiam-se em escalas de observação visual. O uso de sensores inerciais permite traduzir a oscilação cinemática em variáveis físicas mensuráveis.
+## 3. Arquitetura da Solução IoT
+A arquitetura do sistema é segmentada em três camadas principais operando de forma desacoplada:
 
-Este documento descreve a arquitetura do sistema desenvolvido, abordando a configuração do hardware, a temporização da amostragem e o fluxo de processamento de sinais, desde o registo elétrico bruto do sensor até à determinação do pico espectral de frequência.
+1. **Camada de Aquisição (Edge):** O microcontrolador lê o sensor inercial através do protocolo I2C, armazena temporariamente as estruturas de dados na memória RAM nativa para mitigar perdas por latência de rede e realiza a transmissão em lotes utilizando o protocolo MQTT.
+2. **Camada de Broker e Mensageria (Middleware):** Um broker Mosquitto gerencia as filas e tópicos de mensagens, encaminhando comandos de controle e payloads binários empacotados.
+3. **Camada de Aplicação e Processamento (Backend/Frontend):** Um servidor Flask consome os tópicos MQTT, faz o parse binário das amostras, armazena os dados em persistência local (CSV) e disponibiliza endpoints de API REST para alimentação da interface Web baseada em gráficos vetoriais.
 
----
+### Diagrama de Sequência e Fluxo de Dados
+O fluxo temporal das interações de mensagens, rotinas de polling e chamadas de processamento digital segue a padronização abaixo:
+![Diagrama de Sequência e Fluxo de Dados](docs/diagrama_fluxo_detector_tremor.svg)
 
-## 2. Arquitetura de Hardware e Mapeamento de Conexões
-O sistema de captura física utiliza a Unidade de Medição Inercial (IMU) MPU9250, que contém um acelerómetro de 3 eixos e um giroscópio de 3 eixos. O processamento primário e a conectividade de rede são geridos pelo microcontrolador ESP32. A comunicação entre os componentes ocorre através do barramento síncrono serial I2C (Inter-Integrated Circuit).
+## 4. Metodologia Utilizada
+* **Coleta Estrita de Dados:** Definição de uma taxa de amostragem fixa de $200\text{ Hz}$ ($\Delta t = 5\text{ ms}$) controlada por temporizadores internos em hardware, garantindo a integridade da frequência de amostragem para evitar o efeito de *aliasing*.
+* **Otimização de Payload:** Uso da biblioteca `struct` para compactação binária de dados do tipo `float` (padrão IEEE 754), otimizando a transmissão via MQTT e evitando sobrecarga de strings JSON no microcontrolador.
+* **Processamento Digital de Sinais (DSP):**
+  * **Cálculo de Ângulos Angulares:** Aplicação de trigonometria vetorial com `atan2` para determinação dos ângulos de inclinação estática via acelerômetro, e integração discreta sobre os valores do giroscópio.
+  * **Remoção de Offset DC:** Subtração do valor médio do sinal para centralizar a amplitude em zero volt/grau, eliminando a componente de frequência nula ($0\text{ Hz}$).
+  * **Análise Espectral:** Execução do algoritmo da Transformada Rápida de Fourier Real (`rfft`) para transpor os dados temporais ao domínio da frequência.
+  * **Filtragem Digital:** Mascaramento do vetor resultante para isolar exclusivamente a banda biológica compreendida entre $0.5\text{ Hz}$ e $25\text{ Hz}$.
 
-A Tabela 1 apresenta o mapeamento das conexões elétricas estabelecidas entre os módulos:
+## 5. Tecnologias, Sensores e Dispositivos Utilizados
+* **Hardware:**
+  * Microcontrolador ESP32 (Arquitetura Xtensa de 32 bits, Wi-Fi integrado).
+  * Sensor Inercial MPU9250 / MPU6050 (Acelerômetro triaxial e Giroscópio triaxial).
+* **Protocolos e Brokers:**
+  * MQTT (Message Queuing Telemetry Transport).
+  * Eclipse Mosquitto (Broker de mensageria local).
+  * I2C (Inter-Integrated Circuit - comunicação hardware-sensor).
+* **Ambiente de Desenvolvimento e Bibliotecas Backend:**
+  * Python 3.10+
+  * Flask (Framework HTTP Minimalista)
+  * SciPy e NumPy (Processamento matemático avançado e algoritmos de FFT)
+  * Pandas (Manipulação estruturada de matrizes de dados e persistência em arquivos)
+  * Paho-MQTT (Client MQTT nativo para Python)
+* **Ambiente Frontend:**
+  * HTML5, CSS3 estruturado com variáveis de escopo.
+  * JavaScript Vanilla (Comunicação assíncrona por API Fetch, controle de loops via `setInterval`).
+  * SVG Nativo (Scalable Vector Graphics) para renderização em tempo real de matrizes de coordenadas bidimensionais.
 
-### Tabela 1: Mapeamento de Conexões Elétricas
-| Componente Origem (MPU9250) | Componente Destino (ESP32) | Tipo de Sinal | Função Técnica no Sistema |
-| :--- | :--- | :--- | :--- |
-| **VCC** | 3V3 | Alimentação | Fornecimento de tensão contínua estabilizada a 3.3V. |
-| **GND** | GND | Referência | Aterramento comum para equalização de potencial elétrico. |
-| **SCL** | GPIO 22 | Digital (Clock) | Linha de clock síncrono do barramento I2C. |
-| **SDA** | GPIO 21 | Digital (Dados) | Linha bidirecional de transferência de dados I2C. |
+## 6. Análise dos Dados e Resultados Obtidos
+Abaixo são consolidadas as métricas e os formatos de saída gerados após a finalização da rotina de testes operacionais.
 
----
+### Mapeamento de Tópicos e Interações do Sistema
 
-## 3. Engenharia de Firmware e Protocolo de Comunicação
-A transmissão contínua de dados individuais via redes sem fios pode introduzir latência devido ao processamento da pilha de protocolos TCP/IP, alterando a constância da taxa de amostragem de 200 Hz. Para contornar este fator limitante, o firmware do ESP32 foi estruturado em uma máquina de estados com três fases operacionais:
+#### Camada IoT (Mensageria MQTT)
+| Tópico MQTT | Origem | Destino | Tipo de Payload | Objetivo / Função |
+| :--- | :--- | :--- | :--- | :--- |
+| `exame/comando` | Servidor Flask | Sensor ESP32 | Texto Plano (`"INICIAR"`) | Desencadeia o início da janela de coleta de 15 segundos no hardware. |
+| `exame/status` | Sensor ESP32 | Servidor Flask | Texto Plano (`"GRAVANDO"`, `"LOTE_CONCLUIDO"`) | Reporta em tempo real a transição dos estados de execução do hardware. |
+| `exame/dados` | Sensor ESP32 | Servidor Flask | Payload Binário (`struct` bytes) | Transmite as matrizes empacotadas dos três eixos armazenadas na memória interna. |
 
-1. **Aguardando Comando:** O dispositivo permanece em modo de escuta no tópico MQTT `exame/comando`, aguardando o sinal de ativação emitido pelo software supervisor.
-2. **Gravando (Amostragem Isolada):** Ao receber o comando "INICIAR", o ESP32 altera o seu estado para `GRAVANDO`. Durante um intervalo definido de 15 segundos, o microcontrolador realiza a aquisição de dados do sensor com período de amostragem de $\Delta t = 5	ext{ ms}$ (200 Hz). Os valores de aceleração e rotação são lidos via I2C e processados pelo algoritmo do Filtro de Kalman para determinação dos ângulos de orientação: Pitch (X), Roll (Y) e Yaw (Z). Os dados são armazenados temporariamente em uma matriz alocada na memória RAM dinâmica do dispositivo. A função nativa `yield()` é executada para controle do Watchdog Timer.
-3. **Enviando Dados (Descarregamento por Lotes):** Após o intervalo de 15 segundos, o estado é modificado para `ENVIANDO_DADOS`. O firmware realiza o empacotamento binário das variáveis. Cada ângulo é representado como um tipo `float` de precisão simples (4 bytes), totalizando 12 bytes por amostra tridimensional (X, Y, Z). As amostras são agrupadas em blocos de 20 unidades, gerando pacotes binários de 240 bytes, transmitidos via MQTT no tópico `exame/dados`. Ao final da transmissão do vetor da RAM, o dispositivo publica o status "LOTE_CONCLUIDO" no tópico `exame/status` e retorna ao estado inicial.
+#### Camada de Interface Web (API REST/HTTP)
+| Rota / Endpoint | Método | Origem | Destino | Tipo de Dado | Função Técnica |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `/` | `GET` | Navegador | Servidor Flask | HTML / CSS / JS | Provê os ativos do cliente e renderiza o dashboard de interface. |
+| `/api/iniciar` | `POST` | Navegador | Servidor Flask | JSON: `{"nome_paciente": "..."}` | Abre uma nova sessão e invoca o evento de disparo MQTT. |
+| `/api/status` | `GET` | Navegador | Servidor Flask | JSON estruturado de estado | Executa o Polling assíncrono para atualizar contadores e badges. |
+| `/api/resultados` | `GET` | Navegador | Servidor Flask | JSON (Matrizes de Tempo, Sinais e FFT) | Fornece os pontos calculados de FFT e séries de tempo para plotagem. |
 
----
-
-## 4. Backend Supervisor e Arquitetura de Controle em Python
-O sistema supervisor foi desenvolvido em Python utilizando a classe `SistemaExame`. O programa gerencia uma thread dedicada para o cliente MQTT (`client.loop_start()`), o que permite o recebimento assíncrono dos pacotes de dados sem bloquear a interface de execução.
-
-Ao receber pacotes de 240 bytes no tópico `exame/dados`, o método de callback converte a sequência de bytes em valores numéricos de ponto flutuante utilizando a biblioteca nativa `struct` com a formatação `<fff` (Little-endian float). Os valores reconstruídos são adicionados a uma lista interna. A recepção do status "LOTE_CONCLUIDO" faz o sistema descarregar o buffer e gravar os dados em um arquivo `.csv` com identificação temporal.
-
----
-
-## 5. Métodos de Processamento de Sinal e Análise Matemática
-A extração das características do tremor a partir do arquivo CSV compreende duas etapas analíticas sequenciais:
-
-### 5.1. Remoção da Componente Contínua (DC Offset)
-A inclinação estática do sensor em relação ao vetor da gravidade introduz um desvio linear constante no sinal, denominado DC Offset. Na análise espectral, a persistência deste valor resulta em uma magnitude elevada na frequência de 0 Hz, alterando a escala do gráfico.
-
-Para isolar a oscilação do tremor, a média aritmética do vetor de dados é calculada e subtraída de cada amostra individual. A operação de centralização para cada ponto $x_{bruto}(i)$ do sinal é definida por:
-
-$$x_{limpo}(i) = x_{bruto}(i) - \mu$$
-
-Onde a média $\mu$ é calculada pela equação:
-
-$$\mu = rac{1}{N} \sum_{j=1}^{N} x_{bruto}(j)$$
-
-Este procedimento translada o sinal temporal para o eixo simétrico zero, mantendo as características de amplitude e frequência da oscilação biológica.
-
-### 5.2. Transformada Rápida de Fourier (FFT)
-O sinal centralizado é processado pelo algoritmo da Transformada Rápida de Fourier (FFT) através do submódulo `scipy.fft`. A FFT converte o sinal do domínio do tempo para o domínio da frequência. O ponto de maior magnitude no espectro de frequência define a frequência dominante do tremor.
-
----
-
-## 6. Apresentação e Discussão dos Resultados Experimentais
-Para validação do sistema, dados correspondentes ao perfil de tremores neurológicos involuntários foram gerados, processados e plotados com a biblioteca `matplotlib`, conforme apresentado na Figura 1.
+### Visualização Gráfica dos Resultados
+A interface foi modificada e padronizada para exibir os resultados por meio de curvas analíticas contínuas superpostas e coordenadas sob um mesmo fator de escala global. Demonstrado pela figura abaixo:
 
 ![Análise de Tremor no Tempo e Frequência](docs/7.5HZ.png)
-*Figura 1: Análise computacional do sinal biomédico. O gráfico superior demonstra a remoção do desvio estático de 45° (DC Offset), centralizando a oscilação. O gráfico inferior apresenta a assinatura espectral do tremor via FFT.*
 
-### Discussão Técnica dos Gráficos
-A análise da Figura 1 permite avaliar o comportamento da solução desenvolvida:
-* **Domínio do Tempo:** A linha tracejada vermelha representa o sinal angular bruto obtido do sensor, apresentando uma linha de base estática em 45°, decorrente da posição fixa da IMU. A linha azul sólida representa o sinal após a remoção do DC Offset (conforme Seção 5.1). O sinal foi transladado para o centro zero, oscilando entre +2.5° e -2.5°, o que demonstra a preservação da amplitude dinâmica da oscilação.
-* **Domínio da Frequência (FFT):** O espectro de magnitude apresenta atenuação na banda de 0 Hz devido à remoção prévia do DC Offset. O gráfico indica um pico harmônico centrado na frequência de 6.2 Hz.
+1. **Domínio do Tempo (Amplitude):** Exibição do comportamento oscilatório dinâmico dos ângulos de Pitch (Eixo X - Azul), Roll (Eixo Y - Vermelho) e Yaw (Eixo Z - Verde). Os valores representam a amplitude física em graus filtrados após a remoção matemática do deslocamento DC de gravidade estável.
+2. **Domínio da Frequência (FFT):** Demonstração da densidade espectral das ondas. Ao invés de blocos isolados por colunas separadas, o sistema renderiza curvas matemáticas completas e paralelas dos três eixos em uma janela espectral fixa de $0.5\text{ Hz}$ a $25\text{ Hz}$, evidenciando picos nítidos na faixa onde o sinal concentra maior magnitude de energia de vibração.
 
-Na literatura neurológica, frequências localizadas na faixa de 3 a 6.5 Hz são associadas a tremores de repouso característicos da Doença de Parkinson. Frequências entre 7 e 12 Hz correlacionam-se ao Tremor Essencial ou a tremores fisiológicos induzidos por fadiga ou estresse. A resolução obtida demonstra a capacidade do sistema em diferenciar os componentes de frequência do sinal analisado.
+O sistema gera uma classificação analítica baseada nas frequências dominantes detectadas no pico espectral:
+* **Frequências de $3.0\text{ Hz}$ a $6.5\text{ Hz}$:** Classificadas e identificadas no relatório de interface sob o marcador indicativo de padrão clínico associado a tremores de repouso (característica parkinsoniana).
+* **Frequências de $6.5\text{ Hz}$ a $12.0\text{ Hz}$:** Classificadas sob o marcador indicativo de tremores de ação/posturais (característica de Tremor Essencial).
 
----
+## 7. Conclusões
+O sistema integrado demonstrou conformidade com os requisitos de arquitetura estipulados. O uso do protocolo de comunicação MQTT binário eliminou as perdas de pacotes registradas em testes preliminares baseados em JSON sequencial via sockets simples. 
 
-## 7. Conclusão
-O sistema implementado executou as etapas de aquisição, transmissão e análise de dados de acordo com os parâmetros definidos. O isolamento da etapa de amostragem no firmware do ESP32 manteve a taxa de aquisição estável. O protocolo binário via MQTT reduziu o volume de dados trafegados, e o processamento em Python permiteu a identificação da frequência dominante a partir do sinal inercial.
+O processamento digital no backend descentralizou a carga operacional da CPU do navegador client-side, permitindo a exibição fluida das curvas de FFT nos três eixos de forma síncrona. Os dados convertidos para o formato CSV estruturado mantêm a compatibilidade com ferramentas secundárias de análise estatística de terceiros, validando a eficácia e o escalonamento da ferramenta IoT construída.
