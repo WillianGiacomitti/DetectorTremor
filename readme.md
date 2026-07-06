@@ -69,7 +69,7 @@ O sinal centralizado é processado pelo algoritmo da Transformada Rápida de Fou
 ## 6. Apresentação e Discussão dos Resultados Experimentais
 Para validação do sistema, dados correspondentes ao perfil de tremores neurológicos involuntários foram gerados, processados e plotados com a biblioteca `matplotlib`, conforme apresentado na Figura 1.
 
-![Análise de Tremor no Tempo e Frequência](docs\7.5HZ.png)
+![Análise de Tremor no Tempo e Frequência](docs/7.5HZ.png)
 *Figura 1: Análise computacional do sinal biomédico. O gráfico superior demonstra a remoção do desvio estático de 45° (DC Offset), centralizando a oscilação. O gráfico inferior apresenta a assinatura espectral do tremor via FFT.*
 
 ### Discussão Técnica dos Gráficos
