@@ -31,6 +31,8 @@ O fluxo temporal das interações de mensagens, rotinas de polling e chamadas de
 $$\text{Roll}_{\text{acel}} = \text{atan2}(A_Y, \sqrt{A_X^2 + A_Z^2}) \times \left(\frac{180}{\pi}\right)$$
 
 $$\text{Pitch}_{\text{acel}} = \text{atan2}(-A_X, \sqrt{A_Y^2 + A_Z^2}) \times \left(\frac{180}{\pi}\right)$$
+
+S
     Este método apresenta estabilidade a longo prazo, mas sofre com ruídos de alta frequência causados por vibrações e tremores mecânicos rápidos.
   * **Giroscópio:** Mede a velocidade angular em graus por segundo ($^{\circ}/s$). O ângulo dinâmico é obtido por integração numérica discreta no tempo a cada ciclo $\Delta t$:
     $$\theta_{\text{giro}}(t) = \theta_{\text{anterior}} + (G_{\text{eixo}} \times \Delta t)$$
